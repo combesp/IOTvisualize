@@ -160,17 +160,7 @@
                     hums = [];
                     presses = [];
 
-                    const readings = data.data;
-
-                    for (const reading of readings) {
-                        const ts = new Date(reading.timestamp);
-                        labels.push(ts.toLocaleTimeString('en-GB'));
-                        temps.push(reading.temperature.toFixed(1));
-                        hums.push(reading.humidity.toFixed(0));
-                        presses.push(reading.pressure.toFixed(1));
-                    }
-
-                    const recentReadings = readings.slice(-10);
+                    const recentReadings = data.data.slice(-10);
                     for (const reading of recentReadings) {
                         const row = document.createElement('tr');
 
