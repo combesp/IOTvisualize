@@ -159,7 +159,19 @@
                     temps = [];
                     hums = [];
                     presses = [];
-                    for (const reading of data.data) {
+
+                    const readings = data.data;
+
+                    for (const reading of readings) {
+                        const ts = new Date(reading.timestamp);
+                        labels.push(ts.toLocaleTimeString('en-GB'));
+                        temps.push(reading.temperature.toFixed(1));
+                        hums.push(reading.humidity.toFixed(0));
+                        presses.push(reading.pressure.toFixed(1));
+                    }
+
+                    const recentReadings = readings.slice(-10);
+                    for (const reading of recentReadings) {
                         const row = document.createElement('tr');
 
                         const timeCell = document.createElement('td');
@@ -183,11 +195,6 @@
                         row.appendChild(presCell);
 
                         dataTableBody.appendChild(row);
-
-                        labels.push(ts.toLocaleTimeString('en-GB'));
-                        temps.push(temp);
-                        hums.push(hum);
-                        presses.push(pres);
                     }
 
                     const maxSlider = Math.max(0, labels.length - WINDOW_SIZE);
