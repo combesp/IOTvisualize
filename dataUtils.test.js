@@ -3,7 +3,7 @@
  * into correctly formatted arrays for chart labels, temperatures,
  * humidities, and pressures.
  */
-const { extractChartData } = require('./dataUtils');
+const { extractChartData, sliceReadings } = require('./dataUtils');
 
 describe('extractChartData', () => {
   const sampleReadings = [
@@ -26,5 +26,21 @@ describe('extractChartData', () => {
     expect(result.temps).toEqual(['20.1', '21.8']);
     expect(result.hums).toEqual(['50', '50']);
     expect(result.presses).toEqual(['1012.3', '1010.1']);
+  });
+});
+
+describe('sliceReadings', () => {
+  const readings = [
+    { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }
+  ];
+
+  test('returns a window of the desired size', () => {
+    const result = sliceReadings(readings, 1, 3);
+    expect(result).toEqual([{ id: 2 }, { id: 3 }, { id: 4 }]);
+  });
+
+  test('clamps the window to valid bounds', () => {
+    const result = sliceReadings(readings, -2, 10);
+    expect(result).toEqual(readings);
   });
 });
