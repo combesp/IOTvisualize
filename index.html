@@ -1,32 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sensor Data Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            color: #fff;
+            background: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .overlay {
+            background: rgba(0, 0, 0, 0.6);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 0;
+        }
+        #chart-container {
+            width: 80%;
+            margin: 2rem auto;
+        }
+        #data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+            background-color: rgba(255,255,255,0.1);
+        }
+        #data-table th, #data-table td {
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+        }
+        #data-table th {
+            background-color: rgba(255,255,255,0.2);
+        }
+    </style>
 </head>
 <body>
-    <h1>Sensor Data</h1>
-    <table id="data-table" border="1">
-        <thead>
-            <tr>
-                <th>Time</th>
-                <th>Temperature</th>
-                <th>Humidity</th>
-                <th>Pressure</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="overlay">
+        <h1>Sensor Data</h1>
+        <div id="chart-container">
+            <canvas id="sensor-chart"></canvas>
+        </div>
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Temperature (&deg;C)</th>
+                    <th>Humidity (%)</th>
+                    <th>Pressure</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
     <script>
         const dataTable = document.getElementById('data-table');
         const dataTableBody = dataTable.getElementsByTagName('tbody')[0];
+        const ctx = document.getElementById('sensor-chart').getContext('2d');
+
+        const sensorChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Temperature (°C)',
+                        data: [],
+                        borderColor: '#ff6384',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Humidity (%)',
+                        data: [],
+                        borderColor: '#36a2eb',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Pressure',
+                        data: [],
+                        borderColor: '#ffce56',
+                        backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { display: true },
+                    y: { display: true }
+                }
+            }
+        });
 
         function loadData() {
             dataTableBody.innerHTML = '';
 
             axios.get('https://getrecentsensordata-192354701158.europe-west9.run.app')
                 .then(function (data) {
+                    const labels = [];
+                    const temps = [];
+                    const hums = [];
+                    const presses = [];
                     for (const reading of data.data) {
                         const row = document.createElement('tr');
 
@@ -36,19 +123,33 @@
                         row.appendChild(timeCell);
 
                         const tempCell = document.createElement('td');
-                        tempCell.innerHTML = reading.temperature.toFixed(1) + ' &deg;C';
+                        const temp = reading.temperature.toFixed(1);
+                        tempCell.innerHTML = temp + ' &deg;C';
                         row.appendChild(tempCell);
 
                         const humCell = document.createElement('td');
-                        humCell.innerText = reading.humidity.toFixed(0) + ' %';
+                        const hum = reading.humidity.toFixed(0);
+                        humCell.innerText = hum + ' %';
                         row.appendChild(humCell);
 
                         const presCell = document.createElement('td');
-                        presCell.innerText = reading.pressure.toFixed(1);
+                        const pres = reading.pressure.toFixed(1);
+                        presCell.innerText = pres;
                         row.appendChild(presCell);
 
                         dataTableBody.appendChild(row);
+
+                        labels.push(ts.toLocaleTimeString('en-GB'));
+                        temps.push(temp);
+                        hums.push(hum);
+                        presses.push(pres);
                     }
+
+                    sensorChart.data.labels = labels;
+                    sensorChart.data.datasets[0].data = temps;
+                    sensorChart.data.datasets[1].data = hums;
+                    sensorChart.data.datasets[2].data = presses;
+                    sensorChart.update();
                 });
         }
 
