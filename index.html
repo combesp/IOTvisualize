@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
     <style>
         body {
             margin: 0;
@@ -27,6 +28,11 @@
         #chart-container {
             width: 80%;
             margin: 2rem auto;
+        }
+        #time-slider {
+            width: 80%;
+            margin: 1rem auto;
+            display: block;
         }
         #data-table {
             width: 100%;
@@ -50,6 +56,7 @@
         <div id="chart-container">
             <canvas id="sensor-chart"></canvas>
         </div>
+        <input type="range" id="time-slider" min="0" value="0" step="1" />
         <table id="data-table">
             <thead>
                 <tr>
@@ -67,6 +74,13 @@
         const dataTable = document.getElementById('data-table');
         const dataTableBody = dataTable.getElementsByTagName('tbody')[0];
         const ctx = document.getElementById('sensor-chart').getContext('2d');
+        const timeSlider = document.getElementById('time-slider');
+
+        const WINDOW_SIZE = 20;
+        let labels = [];
+        let temps = [];
+        let hums = [];
+        let presses = [];
 
         const sensorChart = new Chart(ctx, {
             type: 'line',
@@ -78,31 +92,62 @@
                         data: [],
                         borderColor: '#ff6384',
                         backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        tension: 0.4
+                        tension: 0.4,
+                        yAxisID: 'y'
                     },
                     {
                         label: 'Humidity (%)',
                         data: [],
                         borderColor: '#36a2eb',
                         backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        tension: 0.4
+                        tension: 0.4,
+                        yAxisID: 'y'
                     },
                     {
                         label: 'Pressure',
                         data: [],
                         borderColor: '#ffce56',
                         backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                        tension: 0.4
+                        tension: 0.4,
+                        yAxisID: 'y1'
                     }
                 ]
             },
             options: {
                 responsive: true,
+                plugins: {
+                    zoom: {
+                        pan: { enabled: true, mode: 'x' },
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            mode: 'x'
+                        }
+                    }
+                },
                 scales: {
                     x: { display: true },
-                    y: { display: true }
+                    y: { type: 'linear', position: 'left' },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { drawOnChartArea: false }
+                    }
                 }
             }
+        });
+
+        function updateChart(startIndex) {
+            const end = startIndex + WINDOW_SIZE;
+            sensorChart.data.labels = labels.slice(startIndex, end);
+            sensorChart.data.datasets[0].data = temps.slice(startIndex, end);
+            sensorChart.data.datasets[1].data = hums.slice(startIndex, end);
+            sensorChart.data.datasets[2].data = presses.slice(startIndex, end);
+            sensorChart.update();
+        }
+
+        timeSlider.addEventListener('input', () => {
+            updateChart(parseInt(timeSlider.value, 10));
         });
 
         function loadData() {
@@ -110,10 +155,10 @@
 
             axios.get('https://getrecentsensordata-192354701158.europe-west9.run.app')
                 .then(function (data) {
-                    const labels = [];
-                    const temps = [];
-                    const hums = [];
-                    const presses = [];
+                    labels = [];
+                    temps = [];
+                    hums = [];
+                    presses = [];
                     for (const reading of data.data) {
                         const row = document.createElement('tr');
 
@@ -145,11 +190,10 @@
                         presses.push(pres);
                     }
 
-                    sensorChart.data.labels = labels;
-                    sensorChart.data.datasets[0].data = temps;
-                    sensorChart.data.datasets[1].data = hums;
-                    sensorChart.data.datasets[2].data = presses;
-                    sensorChart.update();
+                    const maxSlider = Math.max(0, labels.length - WINDOW_SIZE);
+                    timeSlider.max = maxSlider;
+                    timeSlider.value = maxSlider;
+                    updateChart(parseInt(timeSlider.value, 10));
                 });
         }
 

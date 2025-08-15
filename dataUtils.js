@@ -13,4 +13,10 @@ function extractChartData(readings) {
   return { labels, temps, hums, presses };
 }
 
-module.exports = { extractChartData };
+function sliceReadings(readings, start, windowSize) {
+  const s = Math.max(0, start);
+  const e = Math.min(readings.length, s + windowSize);
+  return readings.slice(s, e);
+}
+
+module.exports = { extractChartData, sliceReadings };
