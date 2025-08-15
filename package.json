@@ -1,0 +1,12 @@
+{
+  "name": "iotvisualize",
+  "version": "1.0.0",
+  "description": "Visualize IOT data",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest --passWithNoTests"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
