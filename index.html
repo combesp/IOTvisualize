@@ -159,7 +159,7 @@
                     temps = [];
                     hums = [];
                     presses = [];
-                    for (const reading of data.data) {
+                    for (const reading of data.data.slice(-10)) {
                         const row = document.createElement('tr');
 
                         const timeCell = document.createElement('td');
